@@ -1,11 +1,11 @@
-import os
-from dotenv import load_dotenv
-from openai import AzureOpenAI
-import streamlit as st
-import pandas as pd
-import random
-import re
-from datetime import datetime, timedelta
+import os # 운영체제 관련 기능을 사용하기 위해 불러오는 모듈
+from dotenv import load_dotenv # .env 파일을 읽어서 환경 변수로 로드하는 함수
+from openai import AzureOpenAI # Azure OpenAI 서비스와 통신하기 위해 제공되는 Python SDK (GPT질문, RAG연동)
+import streamlit as st # 웹 앱을 쉽게 만들 수 있는 프레임워크 Streamlit를 불러옴
+import pandas as pd # 엑셀이나 CSV 같은 테이블 데이터 처리/분석을 쉽게 해주는 라이브러
+import random # 난수 생성, 리스트 섞기 등 무작위 기능 제공
+import re # 문자열 패턴을 정의하고, 그 패턴을 사용해서 문자열을 검색, 추출, 치환, 검증
+from datetime import datetime, timedelta # 날짜와 시간 계산 관련 기능 제공
 
 # 페이지 설정 - Streamlit 앱의 기본 설정
 # st : Streamlit에서 제공하는 모든 UI 요소와 기능을 사용할 때 사용
@@ -284,8 +284,8 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                     {
                         "type": "azure_search",  # Azure AI Search 사용
                         "parameters": {
-                            "endpoint": AZURE_AI_SEARCH_ENDPOINT,  # AI Search 엔드포인트
-                            "index_name": INDEX_NAME,  # 검색할 인덱스명
+                            "endpoint": AZURE_AI_SEARCH_ENDPOINT,  # Azure AI Search 서비스 URL
+                            "index_name": INDEX_NAME,  # 검색할 인덱스 이름
                             "authentication": {
                                 "type": "api_key",  # API 키 인증 방식
                                 "key": AZURE_AI_SEARCH_API_KEY,  # API 키
@@ -293,11 +293,11 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                             "query_type": "vector_semantic_hybrid",  # 벡터 + 시맨틱 하이브리드 검색
                             "embedding_dependency": { # 임베딩 텍스트나 문서를 수치 벡터(vector)로 변환
                                 "type": "deployment_name",  # 임베딩 모델 타입
-                                "deployment_name": DEPLOYMENT_EMBEDDING_NAME,  # 임베딩 모델명
+                                "deployment_name": DEPLOYMENT_EMBEDDING_NAME,  # 배포 임베딩 모델명 - text-embedding-3-large
                             },
                             "top_n_documents": 5,  # 검색할 최대 문서 수
-                            "strictness": 3,  # 관련성 필터링 강도 (1-5, 3은 중간)
-                            "in_scope": True  # 검색 범위 제한 활성화
+                            "strictness": 3,  # 검색된 문서의 관련성 필터링 강도를 조정 (1-5, 3은 중간)
+                            "in_scope": True  # 검색 범위 지정된 범위나 인덱스 내에서만 문서를 검색
                         }
                     }
                 ],
