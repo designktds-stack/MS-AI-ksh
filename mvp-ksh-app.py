@@ -2,12 +2,14 @@ import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 import streamlit as st
+import pandas as pd
 import random
 import re
 from datetime import datetime, timedelta
 
-# 페이지 설정 - Streamlit 앱의 기본 설정 (제목, 아이콘, 레이아웃)
-st.set_page_config(page_title="AI 검색 어시스턴트", page_icon="🔍", layout="wide")
+# 페이지 설정 - Streamlit 앱의 기본 설정
+# st : Streamlit에서 제공하는 모든 UI 요소와 기능을 사용할 때 사용
+st.set_page_config(page_title="AI 검색 어시스턴트", page_icon="🔍", layout="wide") 
 
 # 스타일링 - 커스텀 CSS로 UI 디자인 정의
 st.markdown("""
@@ -18,7 +20,7 @@ st.markdown("""
     }
     .answer {
         font-size: 1.6rem; font-weight: 600; padding: 12px 0px 10px; 
-        border-bottom: 1px solid; margin: 0 0 10px 0; color: #1f77b4;
+        border-bottom: 1px solid; margin: 0 0 20px 0; color: #1f77b4;
     }
     .stButton > button {
         background-color: #1f77b4;
@@ -88,7 +90,7 @@ with st.sidebar:
 st.markdown('<div class="main-header">국가재난안전통신망 안전점검 관리 시스템</div>', unsafe_allow_html=True)
 
 # 사용자 입력 영역 - 질문 입력창과 검색 버튼
-input_text = st.text_input("질문을 입력하세요. (예시. 3분기의 각 시스템  KT담당자와 이슈내용 및 완료 여부를 알려주세요.)")  # 질문 입력 필드
+input_text = st.text_input("질문을 입력하세요. (예시. 3분기의 각 시스템 KT담당자와 이슈내용 및 완료 여부를 알려줘.)")  # 질문 입력 필드
 
 button_clicked = st.button("🔍 검색", type="primary")  # 검색 버튼
 
@@ -114,21 +116,12 @@ quarter_periods = {
     "4분기": ("2025-11-01", "2025-11-14")   # 4분기: 11월 1일 ~ 11월 14일
 }
 
-def assign_times_to_systems(systems, times):
-    """시스템별로 중복되지 않게 시간 배정하는 함수"""
-    assigned_times = {}  # 시스템별 배정된 시간을 저장할 딕셔너리
-    random.shuffle(times)  # 시간대를 랜덤으로 섞음
-    time_index = 0  # 현재 시간대 인덱스
 
-    for system in systems:  # 각 시스템에 대해
-        assigned_times[system] = times[time_index]  # 현재 시간대 배정
-        time_index += 1  # 다음 시간대로 이동
-        if time_index >= len(times):  # 시간대를 모두 사용했으면
-            random.shuffle(times)  # 다시 섞고
-            time_index = 0  # 인덱스 초기화
-    return assigned_times
 
-def get_available_dates(quarter):
+
+# 여기부터는 시스템의 점검일,시간을 추천받고자 제가 업무적으로 필요한 부분으로 생성하였습니다. -----------------------------------------------
+
+def get_available_dates(quarter): # def : 함수를 정의 parameter (분기에 가능한 날짜 생성 함수 정의)
     """분기 내 공휴일과 주말을 제외한 점검 추천 날짜 리스트 생성 함수"""
     if quarter not in quarter_periods:  # 유효하지 않은 분기명이면
         return []  # 빈 리스트 반환
@@ -145,7 +138,62 @@ def get_available_dates(quarter):
         current_date += timedelta(days=1)  # 다음 날로 이동
     return valid_dates
 
-# 검색 버튼 클릭 시 실행되는 메인 로직
+def create_inspection_schedule(systems, times, quarter): # 함수를 정의 parameter (systems, times, quarter) 3개입니다.
+    """
+    시스템별 점검 일정을 생성하는 함수
+    - 하루 최대 2개 시스템만 배정
+    - 각 시스템에 시간 배정
+    """
+    available_dates = get_available_dates(quarter)  # 가능한 날짜 가져오기
+    
+    if not available_dates:  # 가능한 날짜가 없으면
+        return None
+    
+    schedule = []  # 점검 일정을 저장할 리스트
+    date_usage = {}  # 각 날짜별 배정된 시스템 수 추적
+    
+    # 날짜 사용 카운트 초기화
+    for date in available_dates:
+        date_usage[date] = 0
+    
+    # # 시스템 복사(반복)
+    shuffled_systems = systems.copy()
+    # random.shuffle(shuffled_systems) # 시스템 순서 랜덤 기능 주석처리
+    
+    current_date_index = 0  # 현재 날짜 인덱스
+    
+    for system in shuffled_systems:  # 각 시스템(system)마다 점검 일정을 배정하기 위해 반복문을 실행
+        # 하루 2개 미만으로 배정된 날짜 찾기
+        assigned = False # 현재 시스템이 날짜 배정 완료 되었는지 여부
+        attempts = 0 # 날짜를 시도한 횟수 (무한 루프 방지용)
+        
+        while not assigned and attempts < len(available_dates):
+            date = available_dates[current_date_index]  # 현재 날짜 가져오기
+            
+            if date_usage[date] < 2:  # 해당 날짜에 2개 미만이면
+                # 시간 배정 (같은 날 다른 시스템과 겹치지 않게)
+                used_times_on_date = [s['time'] for s in schedule if s['date'] == date]
+                available_times_for_date = [t for t in times if t not in used_times_on_date]
+                
+                if available_times_for_date:  # 사용 가능한 시간이 있으면
+                    selected_time = random.choice(available_times_for_date)  # 랜덤 선택
+                    
+                    schedule.append({
+                        'system': system,
+                        'date': date,
+                        'time': selected_time
+                    })
+                    
+                    date_usage[date] += 1  # 해당 날짜 사용 카운트 증가
+                    assigned = True
+            
+            # 다음 날짜로 이동
+            current_date_index = (current_date_index + 1) % len(available_dates)
+            attempts += 1
+    
+    return schedule
+
+# 검색 버튼 클릭 시 실행되는 메인 로직 -------------------------------------------------------------------------------------------------
 if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이 있으면
     try:
         # 질문에서 분기 정보 추출
@@ -159,23 +207,53 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
 
         # "추천 시간" 요청 시 - 점검 일정 추천 기능
         if found_quarter and (("추천" in input_text and "시간" in input_text) or "점검일정" in input_text):  # 분기와 "추천", "시간" 키워드가 있으면
-            st.markdown(f"**{found_quarter} 점검 시 시스템별 추천 점검 시간 및 날짜입니다.**")
-
-            recommended_times = assign_times_to_systems(system_list, available_times)  # 시스템별 시간 배정
-            available_dates = get_available_dates(found_quarter)  # 해당 분기의 가능한 날짜 가져오기
-
-            if not available_dates:  # 가능한 날짜가 없으면
+            st.markdown(f"##### 📅 {found_quarter} 시스템별 점검 일정 추천")
+            
+            # 점검 일정 생성
+            schedule = create_inspection_schedule(system_list, available_times, found_quarter)
+            
+            if not schedule:  # 일정 생성 실패 시
                 st.warning("추천 가능한 날짜가 없습니다 (공휴일 혹은 기간 오류).")
             else:
-                # 시스템 수만큼 랜덤으로 날짜 선택
-                random_dates = random.sample(available_dates, min(len(system_list), len(available_dates)))
+                # DataFrame으로 변환하여 표 형태로 표시
+                df = pd.DataFrame(schedule) # df : 데이터를 표 형식으로 변환 (pandas 메서드를 사용해 날짜 변환, 필터링, 정렬, 컬럼 이름 변경, 계산 등을 쉽게 수행)
+                df['date'] = df['date'].apply(lambda x: x.strftime('%Y-%m-%d'))  # 날짜 형식 변환
+                df.columns = ['시스템', '점검일', '점검시간']  # 컬럼명 한글로 변경
+                
+                # 점검일 기준으로 정렬
+                df = df.sort_values(['점검일', '점검시간']).reset_index(drop=True)
+                
+                # 표 스타일링을 위한 설정
+                st.dataframe(
+                    df,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "시스템": st.column_config.TextColumn("시스템", width="medium"),
+                        "점검일": st.column_config.TextColumn("점검일", width="medium"),
+                        "점검시간": st.column_config.TextColumn("점검시간", width="small"),
+                    }
+                )
+                
+                # 통계 정보 표시
+                st.markdown("---")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("총 시스템 수", len(schedule))
+                with col2:
+                    unique_dates = df['점검일'].nunique()
+                    st.metric("점검 소요 일수", f"{unique_dates}일")
+                with col3:
+                    avg_per_day = len(schedule) / unique_dates
+                    st.metric("일평균 점검 수", f"{avg_per_day:.1f}개")
 
-                for i, sys in enumerate(system_list):  # 각 시스템에 대해
-                    t = recommended_times[sys]  # 배정된 시간 가져오기
-                    date = random_dates[i % len(random_dates)]  # 날짜 선택 (순환)
-                    st.write(f"- **{sys}** → 🗓️ {date.strftime('%Y-%m-%d')} 🕒 {t}")  # 결과 표시
+# 여기까지는 시스템의 점검일,시간을 추천받고자 제가 업무적으로 필요한 부분으로 생성하였습니다.----------------------------------------------------
 
-        else:  # 일반 검색 요청 시
+
+
+# 여기부터는 일반 검색 설정, 정의 영역으로 시스템의 각 분기의 점검내역과 이슈내역 등 점검 정보 검색 코드입니다.------------------------------------ 
+        else:  
+            # 일반 검색 요청 시
             # 시맨틱 검색을 위한 개선된 프롬프트 - GPT에게 역할과 답변 형식 지시
             prompt = [
                 {"role" : "system", "content" : """당신은 KT 시스템 정보 전문가입니다.
@@ -196,7 +274,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                     - 검색된 이슈중에서 질의에 연관된 이슈는 반드시 모두 포함시켜야 함.
                     - 추가 시스템 이슈와 시스템 이슈를 구분짓지 말것.
                     - 예) 추가 시스템 : 앱스토어, 외부연계, BSS, CHATBOT, OFCS
-    """},
+                """},
                 {"role" : "user", "content" : input_text}  # 사용자 질문
             ]
 
@@ -213,7 +291,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                                 "key": AZURE_AI_SEARCH_API_KEY,  # API 키
                             },
                             "query_type": "vector_semantic_hybrid",  # 벡터 + 시맨틱 하이브리드 검색
-                            "embedding_dependency": {
+                            "embedding_dependency": { # 임베딩 텍스트나 문서를 수치 벡터(vector)로 변환
                                 "type": "deployment_name",  # 임베딩 모델 타입
                                 "deployment_name": DEPLOYMENT_EMBEDDING_NAME,  # 임베딩 모델명
                             },
@@ -238,7 +316,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
             answer = response.choices[0].message.content  # GPT 답변 추출
             
             # Citation 마커 추출 (정규표현식으로 [doc숫자] 패턴 찾기)
-            citations = re.findall(r'\[doc\d+\]', answer)
+            citations = re.findall(r'\[doc\d+\]', answer)  # re : 문자열에서 패턴을 찾거나 치환, 분리할 때 사용
             
             # Citation 마커 제거한 깔끔한 답변 (정규표현식으로 치환)
             clean_answer = re.sub(r'\[doc\d+\]', '', answer).strip()
