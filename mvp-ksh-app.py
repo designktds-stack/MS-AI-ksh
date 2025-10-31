@@ -309,7 +309,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                 model=DEPLOYMENT_NAME,  # 사용할 GPT 모델
                 messages=prompt,  # 시스템 프롬프트와 사용자 질문
                 extra_body=rag_params,  # RAG(검색 증강 생성) 파라미터
-                temperature=0.,  # 창의성 수준 (0=결정적, 1=창의적)
+                temperature=0.0,  # 창의성 수준 (0=결정적, 1=창의적)
                 max_tokens=5000  # 최대 생성 토큰 수 (답변 길이)
             )
 
