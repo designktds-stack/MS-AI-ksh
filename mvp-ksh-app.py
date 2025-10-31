@@ -332,7 +332,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
 elif button_clicked:  # 버튼만 클릭하고 질문을 입력하지 않은 경우
     st.warning("Please enter a question.")  # 경고 메시지 표시
 
-# 푸터 - 페이지 하단에 출처 표시
+# 페이지 하단에 출처 표시
 st.markdown("---")
 st.markdown(
     "<div style='text-align:center;color:gray;'>Powered by Azure OpenAI + Azure AI Search (Semantic Hybrid)</div>",

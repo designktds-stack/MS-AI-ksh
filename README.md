@@ -1,6 +1,7 @@
 # 국가재난안전통신망 안전점검 관리 시스템
 ### MVP 제작 준비
 
+ - 요약 : Azure OpenAI SDK + Azure AI Search를 이용한 RAG 구현
  - 검색 데이터 타입 : 엑셀 (4개 파일 업로드 인덱싱)
  - Resource group : pro-resource-ksh-1027
  - Azure OpenAI : pro-openai-ksh-1027
