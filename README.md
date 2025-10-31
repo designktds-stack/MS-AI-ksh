@@ -47,12 +47,12 @@
  ㅇ AzureOpenAI : GPT 모델 호출을 위한 SDK<br>
  ㅇ Streamlit : 웹 UI 구현<br>
  ㅇ pandas : 표 형태 데이터 처리 및 정렬<br>
- ㅇ random, re, datetime: 일정 추천, 정규표현식, 날짜 계산 등
+ ㅇ random, re, datetime: 일정추천, 문자열 패턴정의 정규표현식, 날짜 계산 등
 <br><br>
 
 ### 2. Streamlit UI 구성
  ㅇ 페이지 설정 : st.set_page_config<br>
- ㅇ 사이드바 : 시스템 정보, 인덱스, 모델, 검색 방식, 상태 표시<br>
+ ㅇ 사이드바 : 시스템 정보, 인덱스, 모델, 검색방식, 상태표시<br>
  ㅇ 메인 UI : 제목, 질문 입력창, 검색 버튼
 <br><br>
 
