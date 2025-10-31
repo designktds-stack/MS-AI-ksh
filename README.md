@@ -2,7 +2,7 @@
 ### MVP 제작 준비
 
  #### ◆ 요약 : Azure OpenAI + Azure AI Search를 직접 활용한 Streamlit 기반 RAG
- - 검색 데이터 타입 : 엑셀 (4개 파일 업로드 인덱싱)
+ - 검색 데이터 타입 : 엑셀 (4개 파일 *.xlsx 업로드 인덱싱) 
  - Resource group : pro-resource-ksh-1027
  - Azure OpenAI : pro-openai-ksh-1027
  - Search service : pro-search-ksh-1027
