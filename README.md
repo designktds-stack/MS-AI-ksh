@@ -73,7 +73,7 @@
  - embedding_dependency : 임베딩 모델 (text-embedding-3-large)<br>
  - 관련성 필터(strictness), 검색 범위(in_scope) 등<br><br>
 
- ㅇ GPT 호출 언어모델 : gpt-4.1-mini<br>
+ ㅇ GPT 호출 - 언어모델 (gpt-4.1-mini)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;response = chat_client.chat.completions.create(<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;model=DEPLOYMENT_NAME,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messages=prompt,<br>
