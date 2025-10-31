@@ -116,7 +116,7 @@ quarter_periods = {
 
 
 
-# 여기부터는 시스템의 점검일,시간을 추천받고자 제가 업무적으로 필요한 부분으로 생성하였습니다. -----------------------------------------------
+# 여기부터는 점검일정을 추천받고자 제가 업무적으로 필요한 부분으로 생성하였습니다. -----------------------------------------------
 
 def assign_times_to_systems(systems, times): # def : 함수를 정의 parameter (systems, times)
     """시스템별로 중복되지 않게 시간 배정하는 함수"""
@@ -152,7 +152,7 @@ def get_available_dates(quarter):
 # 검색 버튼 클릭 시 실행되는 메인 로직 -------------------------------------------------------------------------------------------------
 if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이 있으면
     try:
-        # 질문에서 분기 정보 추출
+        # 일반 점검정보 질문에서 분기 정보 추출
         found_quarter = None  # 찾은 분기를 저장할 변수
         for q in ["1분기", "2분기", "3분기", "4분기"]:  # 각 분기명으로
             if q in input_text:  # 질문에 분기명이 포함되어 있으면
@@ -161,7 +161,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
 
         st.write('<div class="answer">AI 답변</div>', unsafe_allow_html=True)  # 답변 섹션 헤더 표시
 
-        # "추천 시간" 요청 시 - 점검 일정 추천 기능
+        # 조건 문의 - 점검 일정 추천 기능
         if found_quarter and (("추천" in input_text and "시간" in input_text) or "점검일정" in input_text):  # 분기와 "추천", "시간" 키워드가 있으면
             st.markdown(f"**{found_quarter} 점검 시 시스템별 추천 점검 시간 및 날짜입니다.**")
 
@@ -179,11 +179,12 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                     date = random_dates[i % len(random_dates)]  # 날짜 선택 (순환)
                     st.write(f"- **{sys}** → 🗓️ {date.strftime('%Y-%m-%d')} 🕒 {t}")  # 결과 표시
 
-# 여기까지는 시스템의 점검일,시간을 추천받고자 제가 업무적으로 필요한 부분으로 생성하였습니다.----------------------------------------------------                   
+# 여기까지는 점검일정을 추천받고자 제가 업무적으로 필요한 부분으로 생성하였습니다.----------------------------------------------------                   
 
 
 
-# 여기부터는 일반 검색 설정, 정의 영역으로 시스템의 각 분기의 점검내역과 이슈내역 등 점검 정보 검색 코드입니다.------------------------------------ 
+
+# 여기부터는 일반 점검정보 검색 prompt, 정의 영역으로 시스템의 점검내역과 이슈내역 등 검색 코드입니다.----------------------------------- 
         else:
             # 시맨틱 검색을 위한 개선된 프롬프트 - GPT에게 역할과 답변 형식 지시
             prompt = [
@@ -210,7 +211,7 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
             ]
 
             # Semantic Hybrid Search 파라미터 - Azure AI Search 설정
-            rag_params = {
+            rag_params = { # Azure OpenAI 모델에게 “어디서, 어떤 방식으로 데이터를 검색할지” 알려주는 검색 설정
                 "data_sources": [
                     {
                         "type": "azure_search",  # Azure AI Search 사용
@@ -243,11 +244,11 @@ if button_clicked and input_text.strip():  # 버튼이 클릭되고 입력값이
                 max_tokens=5000  # 최대 생성 토큰 수 (답변 길이)
             )
 
-            # 답변 처리 - Citation 마커([doc1], [doc2] 등) 제거
-            answer = response.choices[0].message.content  # GPT 답변 추출
+            # 답변 처리 - Citation 마커([doc1], [doc2] 등)  # 모델이 실제로 생성한 “답변 문장” 텍스트
+            answer = response.choices[0].message.content  # choices : GPT가 생성한 답변들(list) / ex. response.choices[0] : 첫 번째 답변을 선택
             
             # Citation 마커 추출 (정규표현식으로 [doc숫자] 패턴 찾기)
-            citations = re.findall(r'\[doc\d+\]', answer) # re : 문자열에서 패턴을 찾거나 치환, 분리할 때 사용
+            citations = re.findall(r'\[doc\d+\]', answer) # citations 리스트로 저장하는 역할 / re : 문자열에서 패턴을 찾거나 치환, 분리할 때 사용
             
             # Citation 마커 제거한 깔끔한 답변 (정규표현식으로 치환)
             clean_answer = re.sub(r'\[doc\d+\]', '', answer).strip()
