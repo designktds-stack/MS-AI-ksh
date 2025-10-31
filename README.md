@@ -39,8 +39,57 @@
 ### 점검일/시간 생성 (자동생성)
  ㅇ 차기 분기 시스템별 점검 일정을 추천받아 업체 점검일정생성에 있어 효율성 기대.<br>
  ㅇ 향후 조건 (kt담당자 근무시간)을 추가하여 점검시간의 적확도를 높일 수 있도록 함.
-<br><br>
+<br><br><br>
  
+## 🔹 모델 구성
+### 1. 환경 설정 및 라이브러리 로드
+ ㅇ os, dotenv : 환경변수(.env)에서 API 키, 엔드포인트 불러오기<br>
+ ㅇ AzureOpenAI : GPT 모델 호출을 위한 SDK<br>
+ ㅇ Streamlit : 웹 UI 구현<br>
+ ㅇ pandas : 표 형태 데이터 처리 및 정렬<br>
+ ㅇ random, re, datetime: 일정 추천, 정규표현식, 날짜 계산 등
+<br><br>
+
+### 2. Streamlit UI 구성
+ ㅇ 페이지 설정 : st.set_page_config<br>
+ ㅇ 사이드바 : 시스템 정보, 인덱스, 모델, 검색 방식, 상태 표시<br>
+ ㅇ 메인 UI : 제목, 질문 입력창, 검색 버튼
+<br><br>
+
+### 3. 점검 일정 추천 기능 (점검 예정 분기)
+ ㅇ system_list : 점검 대상 시스템 목록<br>
+ ㅇ available_times : 점검 시간 후보<br>
+ ㅇ holidays_2025, quarter_periods : 점검 불가 날짜 정의<br>
+ ㅇ 함수<br>
+   - get_available_dates(quarter) : 분기 내 공휴일/주말 제외한 날짜 리스트 생성<br>
+   - create_inspection_schedule(systems, times, quarter) : 하루 2개 시스템 점검, 시간 중복 방지, 랜덤 배정
+<br><br>
+
+### 4. GPT + RAG '엑셀 점검 자료' 검색 기능
+ ㅇ 프롬프트 정의 : 시스템 역할, 답변 형식, 사용자 질문<br>
+ - rag_params :<br>
+ - data_sources : Azure AI Search 설정<br>
+ - query_type : vector + semantic hybrid<br>
+ - embedding_dependency : 임베딩 모델 (text-embedding-3-large)<br>
+ - 관련성 필터(strictness), 검색 범위(in_scope) 등<br><br>
+
+ ㅇ GPT 호출 (Azure OpenAI API)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;response = chat_client.chat.completions.create(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;model=DEPLOYMENT_NAME,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messages=prompt,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;extra_body=rag_params,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;temperature=0.0,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max_tokens=5000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+<br><br>
+
+
+### 5. 전체 구조 흐름
+ ㅇ 환경변수 로드 → Azure OpenAI 체크 → 정상여부 표시 Streamlit UI 표시<br>
+ ㅇ 사용자가 질문 입력 → 검색 버튼 클릭<br>
+ ㅇ 점검일정 요청 관련 → create_inspection_schedule 실행 → 표 형태 출력<br>
+ ㅇ 점검내역 검색 관련 → GPT + RAG 호출 → 답변 출력<br>
+<br><br>
 
 ![image](./MVP-KSH.jpg)
 <br><br>
